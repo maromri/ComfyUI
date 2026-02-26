@@ -194,6 +194,7 @@ def cast_bias_weight_with_vbar(s, dtype, device, bias_dtype, non_blocking, compu
     return weight, bias, (offload_stream, device if signature is not None else None, None)
 
 
+@torch.compiler.disable
 def cast_bias_weight(s, input=None, dtype=None, device=None, bias_dtype=None, offloadable=False, compute_dtype=None, want_requant=False):
     # NOTE: offloadable=False is a a legacy and if you are a custom node author reading this please pass
     # offloadable=True and call uncast_bias_weight() after your last usage of the weight/bias. This
@@ -266,6 +267,7 @@ def cast_bias_weight(s, input=None, dtype=None, device=None, bias_dtype=None, of
         return weight, bias
 
 
+@torch.compiler.disable
 def uncast_bias_weight(s, weight, bias, offload_stream):
     if offload_stream is None:
         return
@@ -869,6 +871,7 @@ def mixed_precision_ops(quant_config={}, compute_dtype=torch.bfloat16, full_prec
                 compute_dtype = input.dtype
 
                 if (getattr(self, 'layout_type', None) is not None and
+                    not torch.compiler.is_compiling() and
                     not isinstance(input, QuantizedTensor) and not self._full_precision_mm and
                     not getattr(self, 'comfy_force_cast_weights', False) and
                     len(self.weight_function) == 0 and len(self.bias_function) == 0):
